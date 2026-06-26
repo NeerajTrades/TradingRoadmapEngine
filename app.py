@@ -175,31 +175,23 @@ def calculate_projection(
         current_capital
     ]
 
-    while (
-
-        projection_capital
-        <
-        target_milestone
-
-        and
-
-        trades_needed
-        <
-        10000
-
-    ):
-        next_capital = projection_capital * (1 + growth_per_trade)
-        projection_capital = next_capital
+    while trades_needed < 10000:
 
         trades_needed += 1
 
-        trade_numbers.append(
-            trades_needed
-        )
+        projection_capital *= (1 + growth_per_trade)
 
-        capital_curve.append(
-            projection_capital
-        )
+        trade_numbers.append(trades_needed)
+
+        if projection_capital >= target_milestone:
+
+            projection_capital = target_milestone
+
+            capital_curve.append(projection_capital)
+
+            break
+
+        capital_curve.append(projection_capital)
 
 
     projection_df = pd.DataFrame({
@@ -645,8 +637,6 @@ if st.session_state.run_projection:
         "projection_capital_curve"
     ]
 
-    st.write("Trades Needed =", trades_needed)
-    st.write("Projection Trade Numbers =", projection_trade_numbers)
 
     st.markdown("---")
 
