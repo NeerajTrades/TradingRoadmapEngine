@@ -654,6 +654,9 @@ if st.session_state.run_projection:
         "projection_capital_curve"
     ]
 
+    st.write("Trades Needed =", trades_needed)
+    st.write("Projection Trade Numbers =", projection_trade_numbers)
+
     st.markdown("---")
 
     st.markdown(
