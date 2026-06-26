@@ -195,8 +195,10 @@ def calculate_projection(
             growth_per_trade
         )
 
+        trades_needed += 1
+
         trade_numbers.append(
-            trades_needed + 1
+            trades_needed
         )
 
         capital_curve.append(
@@ -208,8 +210,6 @@ def calculate_projection(
             capital_curve[-1] = target_milestone
 
             break
-
-        trades_needed += 1
 
     projection_df = pd.DataFrame({
 
