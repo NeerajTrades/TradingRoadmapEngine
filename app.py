@@ -188,12 +188,8 @@ def calculate_projection(
         10000
 
     ):
-
-        projection_capital *= (
-
-            1 +
-            growth_per_trade
-        )
+        next_capital = projection_capital * (1 + growth_per_trade)
+        projection_capital = next_capital
 
         trades_needed += 1
 
@@ -205,11 +201,6 @@ def calculate_projection(
             projection_capital
         )
 
-        if projection_capital >= target_milestone:
-
-            capital_curve[-1] = target_milestone
-
-            break
 
     projection_df = pd.DataFrame({
 
