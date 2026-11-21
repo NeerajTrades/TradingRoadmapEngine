@@ -60,41 +60,86 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
 # -----------------------------------
 # GOOGLE SHEETS CONNECTION
 # -----------------------------------
 
-sheet_id = "1p36E9e6tx97J1jZ1cx9-6BRmCNaHAxaUOye-uPdlseE"
+trade_sheet_id = "1p36E9e6tx97J1jZ1cx9-6BRmCNaHAxaUOye-uPdlseE"
+cashflow_sheet_id = "18ZpmUfc-xxaYEfupWshB1Zx-aMenaXXVbZ74GBkwayg"
 
-csv_url = (
+trade_csv_url = (
     f"https://docs.google.com/spreadsheets/d/"
-    f"{sheet_id}/export?format=csv"
+    f"{trade_sheet_id}/export?format=csv"
 )
 
-@st.cache_data(ttl=3600)
-def load_sheet():
+cashflow_csv_url = (
+    f"https://docs.google.com/spreadsheets/d/"
+    f"{cashflow_sheet_id}/export?format=csv&gid=0"
+)
 
-    return pd.read_csv(csv_url)
+@st.cache_data(ttl=300)
+def load_sheets():
+    trades = pd.read_csv(trade_csv_url)
+    cashflows = pd.read_csv(cashflow_csv_url)
+    return trades, cashflows
 
-df = load_sheet()
+df, cashflow_df = load_sheets()
 
 df = df.iloc[:, :13]
 
-current_capital = float(
-    df["Trade Amount"].iloc[-1]
+df["Date"] = pd.to_datetime(
+    df["Date"], dayfirst=True
 )
 
-actual_trade_numbers = list(
+df["Net PnL"] = pd.to_numeric(
+    df["Net PnL"], errors="coerce"
+).fillna(0)
 
-    range(
-        len(df)
+cashflow_df["Date"] = pd.to_datetime(
+    cashflow_df["Date"], dayfirst=True
+)
+
+cashflow_df["Amount"] = pd.to_numeric(
+    cashflow_df["Amount"], errors="coerce"
+).fillna(0)
+
+cashflow_df["Signed Amount"] = (
+    cashflow_df["Amount"]
+    * cashflow_df["Type"].map({
+        "Deposit": 1,
+        "Withdrawal": -1
+    })
+)
+
+if cashflow_df["Signed Amount"].isna().any():
+    raise ValueError("Invalid Cash Flow Type.")
+
+current_capital = (
+    cashflow_df["Signed Amount"].sum()
+    + df["Net PnL"].sum()
+)
+
+df = df.sort_values("Date").reset_index(drop=True)
+
+actual_trade_numbers = list(range(len(df)))
+
+actual_capital_curve = []
+
+for _, trade in df.iterrows():
+
+    cashflows_until_trade = cashflow_df[
+        cashflow_df["Date"] <= trade["Date"]
+    ]["Signed Amount"].sum()
+
+    pnl_until_trade = df.loc[
+        df["Date"] <= trade["Date"],
+        "Net PnL"
+    ].sum()
+
+    actual_capital_curve.append(
+        cashflows_until_trade + pnl_until_trade
     )
-)
-
-actual_capital_curve = list(
-
-    df["Trade Amount"]
-)
 
 MILESTONES = [
 
